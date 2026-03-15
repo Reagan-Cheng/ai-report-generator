@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 轉型顧問診斷報告產生器</title>
-    <script src="https://unpkg.com/docx@8.2.3/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.2.3/build/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        /* 網頁字體改為微軟正黑體 */
         body { font-family: '微軟正黑體', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1, h2, h3 { color: #2c3e50; }
@@ -21,6 +20,7 @@
         .note-text { font-weight: normal; font-size: 13px; color: #e67e22; margin-left: 5px; }
         button { display: block; width: 100%; padding: 15px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; margin-top: 30px; font-family: '微軟正黑體', sans-serif; }
         button:hover { background-color: #2980b9; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -105,83 +105,116 @@
     <div class="form-group"><label>質化指標：</label><textarea id="kpiQual" placeholder="提升客戶滿意度、強化員工數位協作能力..."></textarea></div>
     <div class="form-group"><label>成效追蹤方式：</label><textarea id="tracking" placeholder="建議每季進行一次ROI檢視..."></textarea></div>
 
-    <button onclick="generateDoc()">下載 Word 報告</button>
+    <button id="downloadBtn" onclick="generateDoc()">下載 Word 報告</button>
 </div>
 
 <script>
     function generateDoc() {
-        const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+        const btn = document.getElementById("downloadBtn");
+        
+        try {
+            // 檢查套件是否成功載入
+            if (typeof docx === 'undefined') {
+                alert("產生 Word 的核心套件尚未載入完成！\n請確認您的網路連線正常，或稍等幾秒後再點擊一次。");
+                return;
+            }
 
-        // 輔助函式：加上 pageBreak 參數控制換頁，並嚴格設定字體為微軟正黑體、大小 13、行距 1.15
-        const createPara = (text, isBold = false, heading = null, pageBreak = false) => {
-            const pOpts = {
-                children: [new TextRun({ 
-                    text: text, 
-                    bold: isBold, 
-                    size: 26, // 13pt = 26 half-points
-                    font: "微軟正黑體" // 設定 Word 輸出字體
-                })],
-                spacing: { line: 276 } // 240 * 1.15 = 276 (1.15 倍行高)
+            btn.innerText = "報告產生中，請稍候...";
+            btn.disabled = true;
+
+            const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+
+            // 輔助函式：支援換行處理、字體與行距設定
+            const createPara = (text, isBold = false, heading = null, pageBreak = false) => {
+                const lines = (text || "").split('\n');
+                const children = [];
+                
+                lines.forEach((line, index) => {
+                    const runOpts = { 
+                        text: line, 
+                        bold: isBold, 
+                        size: 26, 
+                        font: "微軟正黑體" 
+                    };
+                    if (index > 0) runOpts.break = 1; // 第二行開始加入換行符號
+                    children.push(new TextRun(runOpts));
+                });
+
+                const pOpts = {
+                    children: children,
+                    spacing: { line: 276 } // 1.15 倍行高
+                };
+                if (heading) pOpts.heading = heading;
+                if (pageBreak) pOpts.pageBreakBefore = true;
+                return new Paragraph(pOpts);
             };
-            if (heading) pOpts.heading = heading;
-            if (pageBreak) pOpts.pageBreakBefore = true; // 觸發換頁
-            return new Paragraph(pOpts);
-        };
 
-        const doc = new Document({
-            creator: "AI Consultant System",
-            sections: [{
-                properties: {},
-                children: [
-                    // 第一部分 (第一頁)
-                    createPara("【顧問診斷報告書：專家建議填寫表】", true, HeadingLevel.HEADING_1),
-                    createPara("基本資料", true, HeadingLevel.HEADING_2),
-                    createPara(`受訪企業名稱：${document.getElementById("companyName").value}`),
-                    createPara(`產業類別：${document.getElementById("industry").value}`),
-                    createPara(`製造業/服務業：${document.getElementById("industryType").value}`),
-                    createPara(`負責顧問：${document.getElementById("consultant").value}`),
-                    createPara(`填寫日期：${document.getElementById("reportDate").value}`),
-                    
-                    // 第四部分 (加入換頁 pageBreak = true)
-                    createPara("第四部分：AI 轉型藍圖 (AI Transformation Roadmap)", true, HeadingLevel.HEADING_2, true),
-                    createPara("4-1. 建議導入場景矩陣", true, HeadingLevel.HEADING_3),
-                    createPara("第一象限：優先項目", true), createPara(document.getElementById("quadrant1").value),
-                    createPara("第二象限：戰略型專案", true), createPara(document.getElementById("quadrant2").value),
-                    createPara("第三象限：基礎建設", true), createPara(document.getElementById("quadrant3").value),
-                    createPara("第四象限：觀望項目", true), createPara(document.getElementById("quadrant4").value),
+            const doc = new Document({
+                creator: "AI Consultant System",
+                sections: [{
+                    properties: {},
+                    children: [
+                        createPara("【顧問診斷報告書：專家建議填寫表】", true, HeadingLevel.HEADING_1),
+                        createPara("基本資料", true, HeadingLevel.HEADING_2),
+                        createPara(`受訪企業名稱：${document.getElementById("companyName").value}`),
+                        createPara(`產業類別：${document.getElementById("industry").value}`),
+                        createPara(`製造業/服務業：${document.getElementById("industryType").value}`),
+                        createPara(`負責顧問：${document.getElementById("consultant").value}`),
+                        createPara(`填寫日期：${document.getElementById("reportDate").value}`),
+                        
+                        createPara("第四部分：AI 轉型藍圖 (AI Transformation Roadmap)", true, HeadingLevel.HEADING_2, true),
+                        createPara("4-1. 建議導入場景矩陣", true, HeadingLevel.HEADING_3),
+                        createPara("第一象限：優先項目", true), createPara(document.getElementById("quadrant1").value),
+                        createPara("第二象限：戰略型專案", true), createPara(document.getElementById("quadrant2").value),
+                        createPara("第三象限：基礎建設", true), createPara(document.getElementById("quadrant3").value),
+                        createPara("第四象限：觀望項目", true), createPara(document.getElementById("quadrant4").value),
 
-                    createPara("4-2. 分階段實施路徑", true, HeadingLevel.HEADING_3),
-                    createPara("短期 (0-6個月)：基礎建設", true), createPara(document.getElementById("shortTerm").value),
-                    createPara("中期 (6-18個月)：優先項目 (說明：如果在短期無法完成的項目可以延伸至中期填寫)", true), createPara(document.getElementById("midTerm").value),
-                    createPara("長期 (18個月以上)：戰略型專案 (說明：如果在中期無法完成的項目可以延伸至長期填寫)", true), createPara(document.getElementById("longTerm").value),
+                        createPara("4-2. 分階段實施路徑", true, HeadingLevel.HEADING_3),
+                        createPara("短期 (0-6個月)：基礎建設", true), createPara(document.getElementById("shortTerm").value),
+                        createPara("中期 (6-18個月)：優先項目 (說明：如果在短期無法完成的項目可以延伸至中期填寫)", true), createPara(document.getElementById("midTerm").value),
+                        createPara("長期 (18個月以上)：戰略型專案 (說明：如果在中期無法完成的項目可以延伸至長期填寫)", true), createPara(document.getElementById("longTerm").value),
 
-                    createPara("4-3. 資源配置與技術取得建議 (Build vs. Buy Strategy)", true, HeadingLevel.HEADING_3),
-                    createPara(`當前狀態評估：該公司目前屬於 ${document.getElementById("currentState").value}`),
-                    createPara(`顧問建議策略：${document.getElementById("strategy").value}`),
-                    createPara("具體說明：", true), createPara(document.getElementById("strategyDetails").value),
+                        createPara("4-3. 資源配置與技術取得建議 (Build vs. Buy Strategy)", true, HeadingLevel.HEADING_3),
+                        createPara(`當前狀態評估：該公司目前屬於 ${document.getElementById("currentState").value}`),
+                        createPara(`顧問建議策略：${document.getElementById("strategy").value}`),
+                        createPara("具體說明：", true), createPara(document.getElementById("strategyDetails").value),
 
-                    // 第五部分 (加入換頁 pageBreak = true)
-                    createPara("第五部分：關鍵成功要素與風險提示 (KSF & Risks)", true, HeadingLevel.HEADING_2, true),
-                    createPara("5-1. 組織變革管理", true, HeadingLevel.HEADING_3),
-                    createPara("人員培訓建議：", true), createPara(document.getElementById("training").value),
-                    createPara("溝通協作機制：", true), createPara(document.getElementById("communication").value),
+                        createPara("第五部分：關鍵成功要素與風險提示 (KSF & Risks)", true, HeadingLevel.HEADING_2, true),
+                        createPara("5-1. 組織變革管理", true, HeadingLevel.HEADING_3),
+                        createPara("人員培訓建議：", true), createPara(document.getElementById("training").value),
+                        createPara("溝通協作機制：", true), createPara(document.getElementById("communication").value),
 
-                    createPara("5-2. 負責任的 AI 與合規風險", true, HeadingLevel.HEADING_3),
-                    createPara("風險紅燈警示：", true), createPara(document.getElementById("risk").value),
-                    createPara("治理建議：", true), createPara(document.getElementById("governance").value),
+                        createPara("5-2. 負責任的 AI 與合規風險", true, HeadingLevel.HEADING_3),
+                        createPara("風險紅燈警示：", true), createPara(document.getElementById("risk").value),
+                        createPara("治理建議：", true), createPara(document.getElementById("governance").value),
 
-                    createPara("5-3. 投資回報監測機制 (ROI & KPI)", true, HeadingLevel.HEADING_3),
-                    createPara("量化指標：", true), createPara(document.getElementById("kpiQuant").value),
-                    createPara("質化指標：", true), createPara(document.getElementById("kpiQual").value),
-                    createPara("成效追蹤方式：", true), createPara(document.getElementById("tracking").value),
-                ],
-            }],
-        });
+                        createPara("5-3. 投資回報監測機制 (ROI & KPI)", true, HeadingLevel.HEADING_3),
+                        createPara("量化指標：", true), createPara(document.getElementById("kpiQuant").value),
+                        createPara("質化指標：", true), createPara(document.getElementById("kpiQual").value),
+                        createPara("成效追蹤方式：", true), createPara(document.getElementById("tracking").value),
+                    ],
+                }],
+            });
 
-        Packer.toBlob(doc).then((blob) => {
-            const fileName = `顧問診斷報告_${document.getElementById("companyName").value || "未命名"}.docx`;
-            saveAs(blob, fileName);
-        });
+            Packer.toBlob(doc).then((blob) => {
+                const fileName = `顧問診斷報告_${document.getElementById("companyName").value || "未命名"}.docx`;
+                saveAs(blob, fileName);
+                // 恢復按鈕狀態
+                btn.innerText = "下載 Word 報告";
+                btn.disabled = false;
+            }).catch(err => {
+                alert("打包 Word 檔案時發生錯誤：" + err.message);
+                btn.innerText = "下載 Word 報告";
+                btn.disabled = false;
+            });
+
+        } catch (error) {
+            alert("程式執行時發生未預期的錯誤：\n" + error.message);
+            console.error(error);
+            const btn = document.getElementById("downloadBtn");
+            btn.innerText = "下載 Word 報告";
+            btn.disabled = false;
+        }
     }
 </script>
 </body>
