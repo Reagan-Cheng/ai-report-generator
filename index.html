@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 轉型顧問診斷報告產生器</title>
+    <script src="https://unpkg.com/docx@8.2.3/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        /* 網頁字體改為微軟正黑體 */
+        body { font-family: '微軟正黑體', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { margin-top: 30px; background-color: #ecf0f1; padding: 10px; border-left: 4px solid #3498db; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="text"], input[type="date"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: '微軟正黑體', sans-serif; }
+        textarea { height: 100px; resize: vertical; }
+        .help-text { font-size: 13px; color: #16a085; margin-bottom: 8px; background-color: #e8f8f5; padding: 8px; border-radius: 4px;}
+        .note-text { font-weight: normal; font-size: 13px; color: #e67e22; margin-left: 5px; }
+        button { display: block; width: 100%; padding: 15px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; margin-top: 30px; font-family: '微軟正黑體', sans-serif; }
+        button:hover { background-color: #2980b9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>顧問診斷報告書填寫系統</h1>
+
+    <h2>【顧問診斷報告書：專家建議填寫表】</h2>
+    <div class="form-group"><label>受訪企業名稱：</label><input type="text" id="companyName" placeholder="輸入企業名稱"></div>
+    <div class="form-group"><label>產業類別：</label><input type="text" id="industry" placeholder="輸入產業類別"></div>
+    <div class="form-group">
+        <label>製造業/服務業：</label>
+        <select id="industryType">
+            <option value="製造業">製造業</option>
+            <option value="服務業">服務業</option>
+        </select>
+    </div>
+    <div class="form-group"><label>負責顧問：</label><input type="text" id="consultant" placeholder="輸入顧問姓名"></div>
+    <div class="form-group"><label>填寫日期：</label><input type="date" id="reportDate"></div>
+
+    <h2>第四部分：AI 轉型藍圖 (AI Transformation Roadmap)</h2>
+    
+    <h3>4-1. 建議導入場景矩陣</h3>
+    <div class="form-group">
+        <label>第一象限：優先項目 (高價值/高可行性)</label>
+        <div class="help-text">💡 <strong>定義：</strong>具備高價值與高可行性，是企業應最應執行的項目。此類專案通常技術成熟且數據完備，能立即產生顯著的商業效益。</div>
+        <textarea id="quadrant1" placeholder="【例如：RPA流程自動化、智慧客服】"></textarea>
+    </div>
+    <div class="form-group">
+        <label>第二象限：戰略型專案 (高價值/低可行性)</label>
+        <div class="help-text">💡 <strong>定義：</strong>擁有高商業價值但目前可行性較低。這類專案雖具挑戰性或受限於技術法規，但成功後能帶來長期的競爭優勢或創新。</div>
+        <textarea id="quadrant2" placeholder="【例如：全通路精準行銷、預測性維護】"></textarea>
+    </div>
+    <div class="form-group">
+        <label>第三象限：基礎建設 (低價值/高可行性)</label>
+        <div class="help-text">💡 <strong>定義：</strong>可行性高且為必要地基。包含數據清洗、系統整合等工程，若不執行將導致後續AI 模型無效(垃圾進垃圾出)，是支撐轉型必經之路。</div>
+        <textarea id="quadrant3" placeholder="【例如：數據清洗與標準化、雲端搬遷】"></textarea>
+    </div>
+    <div class="form-group">
+        <label>第四象限：觀望項目 (低價值/低可行性)</label>
+        <div class="help-text">💡 <strong>定義：</strong>價值與可行性皆低，目前的投入產出比不佳。</div>
+        <textarea id="quadrant4" placeholder="【例如：生成式設計】"></textarea>
+    </div>
+
+    <h3>4-2. 分階段實施路徑</h3>
+    <div class="form-group"><label>短期 (0-6個月)：基礎建設</label><textarea id="shortTerm" placeholder="目標：補強數據基礎、導入現成工具(SaaS)&#10;1.&#10;2.&#10;3."></textarea></div>
+    <div class="form-group"><label>中期 (6-18個月)：優先項目<span class="note-text">(說明：如果在短期無法完成的項目可以延伸至中期填寫)</span></label><textarea id="midTerm" placeholder="目標：建立專責小組、數據治理制度化&#10;1.&#10;2.&#10;3."></textarea></div>
+    <div class="form-group"><label>長期 (18個月以上)：戰略型專案<span class="note-text">(說明：如果在中期無法完成的項目可以延伸至長期填寫)</span></label><textarea id="longTerm" placeholder="目標：自建/微調模型、全通路/全產線 AI整合&#10;1.&#10;2.&#10;3."></textarea></div>
+
+    <h3>4-3. 資源配置與技術取得建議 (Build vs. Buy Strategy)</h3>
+    <div class="help-text">💡 請參考問卷 H2 (AI 人才現況) 與 I3 (目前技術取得方式) 給予建議。</div>
+    <div class="form-group">
+        <label>當前狀態評估：</label>
+        <select id="currentState">
+            <option value="無技術團隊">無技術團隊</option>
+            <option value="僅有 IT">僅有 IT</option>
+            <option value="已有 AI 團隊">已有 AI 團隊</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>顧問建議策略：</label>
+        <select id="strategy">
+            <option value="全面委外(Buy)：適合無團隊者，建議尋找成熟解決方案商。">全面委外 (Buy)</option>
+            <option value="混合模式(Hybrid)：核心數據自建，通用功能委外。">混合模式 (Hybrid)</option>
+            <option value="內部自建(Build)：適合已有深厚技術能量者，發展自有IP。">內部自建 (Build)</option>
+        </select>
+    </div>
+    <div class="form-group"><label>具體說明：</label><textarea id="strategyDetails" placeholder="輸入具體建議內容，如：建議初期先採訂閱制雲端服務，待累計數據後再考慮自建模型..."></textarea></div>
+
+    <h2>第五部分：關鍵成功要素與風險提示 (KSF & Risks)</h2>
+    
+    <h3>5-1. 組織變革管理</h3>
+    <div class="form-group"><label>人員培訓建議：</label><textarea id="training" placeholder="針對抗拒數位的資深員工，建議舉辦AI體驗工作坊..."></textarea></div>
+    <div class="form-group"><label>溝通協作機制：</label><textarea id="communication" placeholder="建議成立跨部門AI轉型委員會..."></textarea></div>
+
+    <h3>5-2. 負責任的 AI 與合規風險</h3>
+    <div class="form-group"><label>風險紅燈警示：</label><textarea id="risk" placeholder="知識產權與版權、資安防護..."></textarea></div>
+    <div class="form-group"><label>治理建議：</label><textarea id="governance" placeholder="建議導入ISO 27001..."></textarea></div>
+
+    <h3>5-3. 投資回報監測機制 (ROI & KPI)</h3>
+    <div class="form-group"><label>量化指標：</label><textarea id="kpiQuant" placeholder="客服回應時間縮短30%、庫存周轉率提升10%..."></textarea></div>
+    <div class="form-group"><label>質化指標：</label><textarea id="kpiQual" placeholder="提升客戶滿意度、強化員工數位協作能力..."></textarea></div>
+    <div class="form-group"><label>成效追蹤方式：</label><textarea id="tracking" placeholder="建議每季進行一次ROI檢視..."></textarea></div>
+
+    <button onclick="generateDoc()">下載 Word 報告</button>
+</div>
+
+<script>
+    function generateDoc() {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+
+        // 輔助函式：加上 pageBreak 參數控制換頁，並嚴格設定字體為微軟正黑體、大小 13、行距 1.15
+        const createPara = (text, isBold = false, heading = null, pageBreak = false) => {
+            const pOpts = {
+                children: [new TextRun({ 
+                    text: text, 
+                    bold: isBold, 
+                    size: 26, // 13pt = 26 half-points
+                    font: "微軟正黑體" // 設定 Word 輸出字體
+                })],
+                spacing: { line: 276 } // 240 * 1.15 = 276 (1.15 倍行高)
+            };
+            if (heading) pOpts.heading = heading;
+            if (pageBreak) pOpts.pageBreakBefore = true; // 觸發換頁
+            return new Paragraph(pOpts);
+        };
+
+        const doc = new Document({
+            creator: "AI Consultant System",
+            sections: [{
+                properties: {},
+                children: [
+                    // 第一部分 (第一頁)
+                    createPara("【顧問診斷報告書：專家建議填寫表】", true, HeadingLevel.HEADING_1),
+                    createPara("基本資料", true, HeadingLevel.HEADING_2),
+                    createPara(`受訪企業名稱：${document.getElementById("companyName").value}`),
+                    createPara(`產業類別：${document.getElementById("industry").value}`),
+                    createPara(`製造業/服務業：${document.getElementById("industryType").value}`),
+                    createPara(`負責顧問：${document.getElementById("consultant").value}`),
+                    createPara(`填寫日期：${document.getElementById("reportDate").value}`),
+                    
+                    // 第四部分 (加入換頁 pageBreak = true)
+                    createPara("第四部分：AI 轉型藍圖 (AI Transformation Roadmap)", true, HeadingLevel.HEADING_2, true),
+                    createPara("4-1. 建議導入場景矩陣", true, HeadingLevel.HEADING_3),
+                    createPara("第一象限：優先項目", true), createPara(document.getElementById("quadrant1").value),
+                    createPara("第二象限：戰略型專案", true), createPara(document.getElementById("quadrant2").value),
+                    createPara("第三象限：基礎建設", true), createPara(document.getElementById("quadrant3").value),
+                    createPara("第四象限：觀望項目", true), createPara(document.getElementById("quadrant4").value),
+
+                    createPara("4-2. 分階段實施路徑", true, HeadingLevel.HEADING_3),
+                    createPara("短期 (0-6個月)：基礎建設", true), createPara(document.getElementById("shortTerm").value),
+                    createPara("中期 (6-18個月)：優先項目 (說明：如果在短期無法完成的項目可以延伸至中期填寫)", true), createPara(document.getElementById("midTerm").value),
+                    createPara("長期 (18個月以上)：戰略型專案 (說明：如果在中期無法完成的項目可以延伸至長期填寫)", true), createPara(document.getElementById("longTerm").value),
+
+                    createPara("4-3. 資源配置與技術取得建議 (Build vs. Buy Strategy)", true, HeadingLevel.HEADING_3),
+                    createPara(`當前狀態評估：該公司目前屬於 ${document.getElementById("currentState").value}`),
+                    createPara(`顧問建議策略：${document.getElementById("strategy").value}`),
+                    createPara("具體說明：", true), createPara(document.getElementById("strategyDetails").value),
+
+                    // 第五部分 (加入換頁 pageBreak = true)
+                    createPara("第五部分：關鍵成功要素與風險提示 (KSF & Risks)", true, HeadingLevel.HEADING_2, true),
+                    createPara("5-1. 組織變革管理", true, HeadingLevel.HEADING_3),
+                    createPara("人員培訓建議：", true), createPara(document.getElementById("training").value),
+                    createPara("溝通協作機制：", true), createPara(document.getElementById("communication").value),
+
+                    createPara("5-2. 負責任的 AI 與合規風險", true, HeadingLevel.HEADING_3),
+                    createPara("風險紅燈警示：", true), createPara(document.getElementById("risk").value),
+                    createPara("治理建議：", true), createPara(document.getElementById("governance").value),
+
+                    createPara("5-3. 投資回報監測機制 (ROI & KPI)", true, HeadingLevel.HEADING_3),
+                    createPara("量化指標：", true), createPara(document.getElementById("kpiQuant").value),
+                    createPara("質化指標：", true), createPara(document.getElementById("kpiQual").value),
+                    createPara("成效追蹤方式：", true), createPara(document.getElementById("tracking").value),
+                ],
+            }],
+        });
+
+        Packer.toBlob(doc).then((blob) => {
+            const fileName = `顧問診斷報告_${document.getElementById("companyName").value || "未命名"}.docx`;
+            saveAs(blob, fileName);
+        });
+    }
+</script>
+</body>
+</html>
